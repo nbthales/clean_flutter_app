@@ -1,7 +1,7 @@
 import 'package:faker/faker.dart';
 import 'package:http/http.dart';
 import 'package:mockito/mockito.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
 
 import 'package:clean_flutter_app/data/http/http.dart';
 import 'package:clean_flutter_app/infra/http/http.dart';
@@ -17,6 +17,14 @@ void main() {
     client = ClientSpy();
     sut = HttpAdapter(client);
     url = faker.internet.httpUrl();
+  });
+
+  group('shared', () {
+    test('Should throw ServerError if invalid method is provided', () async {
+      final future = sut.request(url: url, method: 'invalid_method');
+
+      expect(future, throwsA(HttpError.serverError));
+    });
   });
 
   group('post', () {
@@ -40,7 +48,7 @@ void main() {
         url,
         headers: {
           'content-type': 'application/json',
-          'accept-type': 'application/json',
+          'accept': 'application/json'
         },
         body: '{"any_key":"any_value"}',
       ));
@@ -86,14 +94,6 @@ void main() {
     });
 
     test('Should return BadRequestError if post returns 400', () async {
-      mockResponse(400);
-
-      final future = sut.request(url: url, method: 'post');
-
-      expect(future, throwsA(HttpError.badRequest));
-    });
-
-    test('Should return BadRequestError if post returns 400', () async {
       mockResponse(400, body: '');
 
       final future = sut.request(url: url, method: 'post');
@@ -125,7 +125,7 @@ void main() {
       expect(future, throwsA(HttpError.forbidden));
     });
 
-    test('Should return NorFoundError if post returns 404', () async {
+    test('Should return NotFoundError if post returns 404', () async {
       mockResponse(404);
 
       final future = sut.request(url: url, method: 'post');
